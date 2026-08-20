@@ -6,6 +6,20 @@ import { IBag, ICheck, ICopy, IMinus, IPlus, ITrash, ITruck, IWhats, IX } from "
 
 type Step = "cart" | "info" | "done";
 
+/* يجب أن يبقى Field خارج المكوّن — تعريفه داخل الدالة يعيد توليده مع كل ضغطة زر
+   فيفقد الحقل التركيز وتُغلق لوحة المفاتيح بعد حرف واحد */
+function Field({ label, children, err }: { label: string; children: React.ReactNode; err?: boolean }) {
+  return (
+    <label className="block">
+      <span className="block text-[13px] font-black text-ink2 mb-1.5">{label}</span>
+      <div className={err ? "[&_input]:border-pom-500 [&_input]:bg-pom-100/40 [&_textarea]:border-pom-500" : ""}>{children}</div>
+    </label>
+  );
+}
+
+const inputCls =
+  "w-full rounded-xl border-2 border-ink/15 bg-paper px-4 py-3 text-[15px] font-bold text-ink placeholder:text-ink2/40 focus:border-olive-600 focus:outline-none transition-colors";
+
 export default function CartDrawer() {
   const { cartOpen, setCartOpen, cart, products, setCartQty, removeFromCart, placeOrder, notify } = useShop();
   const [step, setStep] = useState<Step>("cart");
@@ -73,16 +87,6 @@ export default function CartDrawer() {
   };
 
   if (!cartOpen) return null;
-
-  const Field = ({ label, children, err }: { label: string; children: React.ReactNode; err?: boolean }) => (
-    <label className="block">
-      <span className="block text-[13px] font-black text-ink2 mb-1.5">{label}</span>
-      <div className={err ? "[&_input]:border-pom-500 [&_input]:bg-pom-100/40" : ""}>{children}</div>
-    </label>
-  );
-
-  const inputCls =
-    "w-full rounded-xl border-2 border-ink/15 bg-paper px-4 py-3 text-[15px] font-bold text-ink placeholder:text-ink2/40 focus:border-olive-600 focus:outline-none transition-colors";
 
   return (
     <div className="fixed inset-0 z-[95]">
