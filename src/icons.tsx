@@ -229,6 +229,14 @@ export const IMortar = ({ className, strokeWidth = 1.8 }: P) => (
   </svg>
 );
 
+export const IZoom = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="M20.5 20.5L15.2 15.2" />
+    <path d="M10.5 8v5M8 10.5h5" />
+  </svg>
+);
+
 /* شعار البيت السوري: رمان داخل قوس */
 export const Logo = ({ className }: P) => (
   <svg viewBox="0 0 48 48" className={className ?? "w-11 h-11"}>

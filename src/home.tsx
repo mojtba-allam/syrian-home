@@ -8,15 +8,16 @@ import {
 import { Marquee, MARQUEE_ITEMS } from "./ui";
 import {
   IArrowDown, ICheese, ICherry, ICheck, IDrop, IHand, IJar, ILeaf,
-  IMortar, IOlive, IPlus, IPom, IShield, ITruck, IWheat, IWhats, ISpark, Logo,
+  IMortar, IOlive, IPlus, IPom, IShield, ITruck, IWheat, IWhats, ISpark, IZoom, Logo,
 } from "./icons";
+import ProductModal from "./product";
 
 const CAT_ICON: Record<string, (p: { className?: string }) => React.ReactElement> = {
   cheese: ICheese, jar: IJar, leaf: ILeaf, drop: IDrop, cherry: ICherry, olive: IOlive,
 };
 
 /* ============================ الهيرو ============================ */
-function Hero() {
+function Hero({ onOpenProduct }: { onOpenProduct: (id: string) => void }) {
   const { addToCart, notify, products } = useShop();
   const oil = products.find((p) => p.id === "p-oil");
   const scrollToShop = () => document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
@@ -109,13 +110,24 @@ function Hero() {
             {/* بطاقة الزيت */}
             {oil && (
               <div className="floaty absolute -bottom-5 right-2 lg:-right-6 z-10 w-56 bg-paper rounded-2xl shadow-xl shadow-ink/20 border-2 border-ink/10 p-3 flex items-center gap-3" style={{ ["--fr" as string]: "-2deg", animationDelay: "1.2s" }}>
-                <img src={oil.image} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                <button
+                  onClick={() => onOpenProduct(oil.id)}
+                  aria-label="عرض تفاصيل الزيت العفريني"
+                  className="shrink-0 relative rounded-xl overflow-hidden group/oil cursor-pointer"
+                >
+                  <img src={oil.image} alt="زيت الزيتون العفريني" className="w-14 h-14 rounded-xl object-cover transition-transform duration-500 group-hover/oil:scale-110" />
+                  <span className="absolute inset-0 bg-olive-950/0 group-hover/oil:bg-olive-950/25 transition-colors grid place-items-center">
+                    <IZoom className="w-4 h-4 text-paper opacity-0 group-hover/oil:opacity-100 transition-opacity" strokeWidth={2.2} />
+                  </span>
+                </button>
                 <div className="min-w-0">
                   <p className="text-[12px] font-black text-pom-600">الأفضل لدينا ★</p>
-                  <p className="text-[13px] font-bold text-ink truncate">زيت عفريني — بارد</p>
+                  <button onClick={() => onOpenProduct(oil.id)} className="text-[13px] font-bold text-ink truncate hover:text-pom-600 transition-colors text-right leading-tight">
+                    زيت عفريني — بارد
+                  </button>
                   <button
                     onClick={() => { addToCart(oil.id); notify("انضاف زيت عفريني للسلة 🫒"); }}
-                    className="mt-1 text-[11px] font-black text-olive-700 hover:text-pom-600 transition-colors"
+                    className="mt-1 block text-[11px] font-black text-olive-700 hover:text-pom-600 transition-colors"
                   >
                     + ضيفه عالسلة · {money(oil.price)}
                   </button>
@@ -141,7 +153,7 @@ function Hero() {
 }
 
 /* ============================ بطاقة منتج ============================ */
-function ProductCard({ p, i }: { p: Product; i: number }) {
+function ProductCard({ p, i, onOpen }: { p: Product; i: number; onOpen: (id: string) => void }) {
   const { addToCart, notify } = useShop();
   const [added, setAdded] = useState(false);
   const cat = CATEGORIES.find((c) => c.id === p.category);
@@ -160,7 +172,11 @@ function ProductCard({ p, i }: { p: Product; i: number }) {
       className="reveal group relative bg-paper rounded-[20px] border-2 border-ink/10 hover:border-olive-600/50 shadow-sm hover:shadow-xl hover:shadow-ink/10 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col"
       style={{ transitionDelay: `${(i % 4) * 70}ms` }}
     >
-      <div className="relative overflow-hidden aspect-square bg-paper2">
+      <button
+        onClick={() => onOpen(p.id)}
+        aria-label={`عرض تفاصيل ${p.name}`}
+        className="relative overflow-hidden aspect-square bg-paper2 block w-full cursor-pointer"
+      >
         <img
           src={p.image}
           alt={p.name}
@@ -173,22 +189,29 @@ function ProductCard({ p, i }: { p: Product; i: number }) {
           </span>
         )}
         {out && (
-          <div className="absolute inset-0 bg-ink/55 grid place-items-center">
+          <span className="absolute inset-0 bg-ink/55 grid place-items-center">
             <span className="bg-paper text-pom-600 font-black px-4 py-2 rounded-full border-2 border-pom-600 -rotate-3">
               نفدت الكمية
             </span>
-          </div>
+          </span>
         )}
         {!out && p.stock <= 10 && (
-          <span className="absolute bottom-3 right-3 bg-olive-900/85 text-saffron-400 text-[11px] font-bold px-2.5 py-1 rounded-full">
+          <span className="absolute top-3 left-3 bg-olive-900/85 text-saffron-400 text-[11px] font-bold px-2.5 py-1 rounded-full">
             باقي {arNum(p.stock)} بس
           </span>
         )}
-      </div>
+        <span className="absolute bottom-3 left-3 hidden sm:inline-flex items-center gap-1.5 bg-olive-900/85 text-paper text-[11px] font-black px-3 py-1.5 rounded-full opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+          <IZoom className="w-3.5 h-3.5" strokeWidth={2.2} /> التفاصيل والصور
+        </span>
+      </button>
 
       <div className="p-4 flex flex-col grow">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-extrabold text-ink text-[17px] leading-snug">{p.name}</h3>
+          <h3 className="font-extrabold text-ink text-[17px] leading-snug text-right">
+            <button onClick={() => onOpen(p.id)} className="hover:text-pom-600 transition-colors leading-snug text-right">
+              {p.name}
+            </button>
+          </h3>
         </div>
         {cat && (
           <p className="mt-1 text-[11px] font-black text-olive-600 tracking-wide">{cat.name}</p>
@@ -222,7 +245,7 @@ function ProductCard({ p, i }: { p: Product; i: number }) {
 }
 
 /* ============================ قسم المتجر ============================ */
-function ShopSection() {
+function ShopSection({ onOpenProduct }: { onOpenProduct: (id: string) => void }) {
   const { products } = useShop();
   const [cat, setCat] = useState<string>("all");
   useReveal([cat]);
@@ -282,7 +305,7 @@ function ShopSection() {
 
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 lg:gap-5">
         {list.map((p, i) => (
-          <ProductCard key={p.id} p={p} i={i} />
+          <ProductCard key={p.id} p={p} i={i} onOpen={onOpenProduct} />
         ))}
       </div>
       {list.length === 0 && (
@@ -491,13 +514,18 @@ function DeliverySection() {
 /* ============================ الصفحة الرئيسية ============================ */
 export default function HomePage() {
   useReveal([JAM_IMAGE]);
+  const { products } = useShop();
+  const [selId, setSelId] = useState<string | null>(null);
+  const sel = selId ? products.find((p) => p.id === selId) ?? null : null;
+
   return (
     <main>
-      <Hero />
-      <ShopSection />
+      <Hero onOpenProduct={setSelId} />
+      <ShopSection onOpenProduct={setSelId} />
       <StorySection />
       <WhySection />
       <DeliverySection />
+      {sel && <ProductModal product={sel} onClose={() => setSelId(null)} onOpen={setSelId} />}
     </main>
   );
 }
