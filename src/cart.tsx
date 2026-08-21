@@ -6,7 +6,7 @@ import { IBag, ICheck, ICopy, IMinus, IPlus, ITrash, ITruck, IWhats, IX } from "
 
 type Step = "cart" | "info" | "done";
 
-/* يجب أن يبقى Field خارج المكوّن — تعريفه داخل الدالة يعيد توليده مع كل ضغطة زر
+/* يجب أن يبقى Field خارج المكوّن — تعريفه داخل الدالة يعيد توليده مع كل حرف يُكتب
    فيفقد الحقل التركيز وتُغلق لوحة المفاتيح بعد حرف واحد */
 function Field({ label, children, err }: { label: string; children: React.ReactNode; err?: boolean }) {
   return (
@@ -106,7 +106,6 @@ export default function CartDrawer() {
               {step === "done" && "رسالتك جاهزة 🎉"}
             </p>
           </div>
-          {/* خطوات */}
           <div className="flex items-center gap-1.5">
             {(["cart", "info", "done"] as Step[]).map((s, i) => (
               <span key={s} className={`w-2 h-2 rounded-full transition-colors ${step === s ? "bg-saffron-400" : i < ["cart", "info", "done"].indexOf(step) ? "bg-wa" : "bg-paper/25"}`} />

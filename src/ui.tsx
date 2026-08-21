@@ -101,11 +101,7 @@ export function Header({ route, nav }: { route: Route; nav: (r: Route) => void }
   return (
     <header className="sticky top-0 z-[70] bg-paper/90 backdrop-blur border-b-2 border-ink/10">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 lg:h-[72px] flex items-center gap-3">
-        <a
-          href="#/"
-          onClick={() => setOpen(false)}
-          className="flex items-center gap-2.5 group"
-        >
+        <a href="#/" onClick={() => setOpen(false)} className="flex items-center gap-2.5 group">
           <Logo className="w-10 h-10 lg:w-11 lg:h-11 group-hover:rotate-6 transition-transform" />
           <span className="leading-none">
             <span className="block font-display text-[26px] lg:text-3xl text-pom-600">البيت السوري</span>

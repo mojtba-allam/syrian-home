@@ -1,491 +1,481 @@
 import React, { useState } from "react";
-import { IDoc, ISpark } from "./icons";
+import { useReveal } from "./hooks";
 
-/* ==================== ERD ==================== */
-type Entity = {
-  name: string; x: number; y: number; planned?: boolean;
-  fields: [string, string][]; // [name, type]
+type Endpoint = {
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  desc: string;
+  req?: string;
+  res: string;
+  auth?: boolean;
 };
 
-const ENTITIES: Entity[] = [
-  { name: "admins", x: 40, y: 60, fields: [["id", "uuid PK"], ["username", "varchar(40) UQ"], ["password_hash", "text"], ["role", "enum"], ["created_at", "timestamptz"]] },
-  { name: "visits", x: 40, y: 250, fields: [["id", "bigserial PK"], ["visitor_key", "varchar(64)"], ["date", "date"], ["count", "int"], ["user_agent", "text"], ["last_seen", "timestamptz"]] },
-  { name: "settings", x: 40, y: 470, fields: [["key", "varchar PK"], ["value", "jsonb"], ["updated_at", "timestamptz"]] },
-  { name: "categories", x: 310, y: 60, fields: [["id", "uuid PK"], ["name", "varchar(60)"], ["slug", "varchar(60) UQ"], ["icon", "varchar(30)"], ["created_at", "timestamptz"]] },
-  { name: "ledger_entries", x: 310, y: 300, fields: [["id", "uuid PK"], ["admin_id", "uuid FK"], ["order_id", "uuid FK NULL"], ["type", "enum in|out"], ["label", "varchar(140)"], ["amount", "numeric(12,0)"], ["date", "timestamptz"], ["created_at", "timestamptz"]] },
-  { name: "products", x: 580, y: 60, fields: [["id", "uuid PK"], ["category_id", "uuid FK"], ["name", "varchar(90)"], ["slug", "varchar(90) UQ"], ["description", "text"], ["price", "numeric(12,0)"], ["currency", "char(3) IQD"], ["size", "varchar(40)"], ["stock", "int"], ["image_url", "text"], ["badge", "varchar(40) NULL"], ["is_featured", "bool"], ["created_at", "timestamptz"]] },
-  { name: "order_items", x: 580, y: 400, fields: [["id", "uuid PK"], ["order_id", "uuid FK"], ["product_id", "uuid FK"], ["product_name", "varchar(90)"], ["unit_price", "numeric(12,0)"], ["qty", "int"], ["line_total", "numeric(12,0)"]] },
-  { name: "payments", x: 580, y: 630, planned: true, fields: [["id", "uuid PK"], ["order_id", "uuid FK"], ["provider", "enum"], ["amount", "numeric(12,0)"], ["status", "enum"], ["provider_ref", "varchar NULL"], ["created_at", "timestamptz"]] },
-  { name: "orders", x: 860, y: 60, fields: [["id", "uuid PK"], ["order_no", "int UQ"], ["customer_name", "varchar(70)"], ["phone", "varchar(15)"], ["governorate", "varchar(30)"], ["address", "text"], ["notes", "text NULL"], ["subtotal", "numeric(12,0)"], ["delivery_fee", "numeric(12,0)"], ["total", "numeric(12,0)"], ["status", "enum"], ["created_at", "timestamptz"], ["delivered_at", "timestamptz NULL"]] },
-  { name: "deliveries", x: 860, y: 400, fields: [["id", "uuid PK"], ["order_id", "uuid FK UQ"], ["carrier", "varchar(50)"], ["driver_name", "varchar(60)"], ["driver_phone", "varchar(15)"], ["tracking_no", "varchar(40) NULL"], ["governorate", "varchar(30)"], ["status", "enum"], ["shipped_at", "timestamptz"], ["delivered_at", "timestamptz NULL"]] },
+const GROUPS: { title: string; note: string; endpoints: Endpoint[] }[] = [
+  {
+    title: "المنتجات والتصنيفات",
+    note: "قراءة عامة للجميع، والكتابة تتطلب توكن المدير.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/v1/products",
+        desc: "جلب المنتجات مع فلترة وترقيم صفحات. Query: ?category=&search=&page=&limit=",
+        res: `{
+  "data": [{
+    "id": "prd_8fa2", "name": "مكدوس سوري على أصوله",
+    "category_id": "cat_pickles", "description": "باذنجان محشو بالجوز...",
+    "price_iqd": 10000, "size": "مرطبان ١ كغم",
+    "stock": 30, "image_url": "/uploads/makdous.webp",
+    "badge": "على أصوله", "is_active": true
+  }],
+  "meta": { "page": 1, "limit": 20, "total": 12 }
+}`,
+      },
+      {
+        method: "GET", path: "/api/v1/products/:id",
+        desc: "تفاصيل منتج واحد مع صورته وتصنيفه.",
+        res: `{
+  "id": "prd_8fa2", "name": "مكدوس سوري على أصوله",
+  "category": { "id": "cat_pickles", "name": "مكدوس ومخللات" },
+  "price_iqd": 10000, "stock": 30, "image_url": "..."
+}`,
+      },
+      {
+        method: "POST", path: "/api/v1/products", auth: true,
+        desc: "إضافة منتج جديد (صورة، تصنيف، كمية، حجم، سعر).",
+        req: `{
+  "name": "لبنة بلدية بحبة البركة",
+  "category_id": "cat_dairy",
+  "description": "لبنة بلدية معجونة بالزعتر...",
+  "price_iqd": 6000, "size": "مرطبان ١ كغم",
+  "stock": 40, "badge": "الأكثر طلباً"
+}`,
+        res: `{ "id": "prd_new1", "created_at": "2025-06-01T10:00:00Z" }`,
+      },
+      {
+        method: "PUT", path: "/api/v1/products/:id", auth: true,
+        desc: "تعديل منتج — نفس حقول الإنشاء، كلها اختيارية.",
+        req: `{ "price_iqd": 6500, "stock": 35 }`,
+        res: `{ "updated": true }`,
+      },
+      {
+        method: "DELETE", path: "/api/v1/products/:id", auth: true,
+        desc: "حذف منتج (مع حذف صورته من التخزين).",
+        res: `{ "deleted": true }`,
+      },
+      {
+        method: "POST", path: "/api/v1/uploads", auth: true,
+        desc: "رفع صورة منتج — multipart/form-data، حد أقصى ٢MB، تُحفظ كـ WebP.",
+        req: `Content-Type: multipart/form-data
+field "file": <image>`,
+        res: `{ "url": "/uploads/labneh_a1b2.webp" }`,
+      },
+      {
+        method: "GET", path: "/api/v1/categories",
+        desc: "كل التصنيفات مع عدد منتجاتها.",
+        res: `{ "data": [{ "id": "cat_dairy", "name": "ألبان وأجبان بلدية", "count": 2 }] }`,
+      },
+    ],
+  },
+  {
+    title: "السلة والطلبات",
+    note: "الطلب يُنشأ من المتصفح ثم يُرسل تلقائياً إلى واتساب العائلة برسالة منسّخة قابلة للإرسال.",
+    endpoints: [
+      {
+        method: "POST", path: "/api/v1/orders",
+        desc: "إنشاء طلب (يخصم الكمية من المخزون فوراً).",
+        req: `{
+  "customer": {
+    "name": "أبو أحمد", "phone": "07881234567",
+    "governorate": "ديالى", "address": "بعقوبة — حي المعلمين",
+    "notes": "التوصيل مساءً"
+  },
+  "items": [{ "product_id": "prd_8fa2", "qty": 2 }]
+}`,
+        res: `{
+  "id": "ord_9c41", "order_no": 1042,
+  "total_iqd": 20000, "status": "جديد",
+  "whatsapp_message": "🌿 *طلب جديد — البيت السوري*\\n..."
+}`,
+      },
+      {
+        method: "GET", path: "/api/v1/orders/:id", auth: true,
+        desc: "تفاصيل طلب مع أصنافه وزبونه.",
+        res: `{
+  "id": "ord_9c41", "order_no": 1042, "status": "قيد التوصيل",
+  "items": [{ "product": "مكدوس...", "qty": 2, "price_iqd": 10000 }],
+  "total_iqd": 20000,
+  "customer": { "name": "أبو أحمد", "phone": "0788..." }
+}`,
+      },
+      {
+        method: "PATCH", path: "/api/v1/orders/:id/status", auth: true,
+        desc: "تحديث حالة الطلب. عند «تم التسليم» يُنشأ قيد وارد تلقائياً في المحاسبة.",
+        req: `{ "status": "قيد التوصيل" }`,
+        res: `{ "updated": true, "ledger_entry_id": "led_77d1" }`,
+      },
+      {
+        method: "GET", path: "/api/v1/orders?status=جديد", auth: true,
+        desc: "قائمة الطلبات مع فلترة بالحالة والتاريخ.",
+        res: `{ "data": [ { "id": "ord_9c41", "order_no": 1042, "status": "جديد" } ], "meta": {} }`,
+      },
+      {
+        method: "POST", path: "/api/v1/orders/:id/whatsapp",
+        desc: "توليد رسالة واتساب منسّقة بكامل المشتريات والبيانات — قابلة للنسخ واللصق.",
+        res: `{
+  "message": "🌿 *طلب جديد — البيت السوري*\\n🧾 رقم الطلب: #1042\\n🛒 ...",
+  "wa_link": "https://wa.me/9647887356906?text=..."
+}`,
+      },
+    ],
+  },
+  {
+    title: "لوحة المدير: الإحصاءات والمحاسبة",
+    note: "كلها محمية بتوكن المدير (انظر المصادقة أعلاه).",
+    endpoints: [
+      {
+        method: "POST", path: "/api/v1/auth/login",
+        desc: "تسجيل دخول المدير — يعيد توكن JWT صالحاً لـ ١٢ ساعة.",
+        req: `{ "pin": "••••" }`,
+        res: `{ "token": "eyJhbGciOiJIUzI1NiJ9..." }`,
+      },
+      {
+        method: "GET", path: "/api/v1/admin/stats", auth: true,
+        desc: "نظرة عامة: زوار اليوم والإجمالي، الطلبات حسب الحالة، والإيراد.",
+        res: `{
+  "visitors_today": 47, "visitors_total": 1285,
+  "orders_by_status": { "جديد": 3, "قيد التوصيل": 2 },
+  "revenue_iqd": 486000
+}`,
+      },
+      {
+        method: "GET", path: "/api/v1/admin/visitors?days=7", auth: true,
+        desc: "سلسلة زيارات يومية لمخطط آخر ٧ أيام.",
+        res: `{ "series": [{ "date": "2025-05-30", "count": 34 }] }`,
+      },
+      {
+        method: "GET", path: "/api/v1/admin/ledger", auth: true,
+        desc: "سجل القيود (وارد/مصروف) مرتباً بالتاريخ.",
+        res: `{ "data": [{ "id": "led_77d1", "label": "طلب #1042", "amount": 20000, "type": "in" }] }`,
+      },
+      {
+        method: "POST", path: "/api/v1/admin/ledger", auth: true,
+        desc: "إضافة قيد يدوي (وارد أو مصروف).",
+        req: `{ "type": "out", "label": "شراء مرطبانات", "amount": 35000 }`,
+        res: `{ "id": "led_77d2", "date": "2025-06-01" }`,
+      },
+      {
+        method: "DELETE", path: "/api/v1/admin/ledger/:id", auth: true,
+        desc: "حذف قيد من السجل.",
+        res: `{ "deleted": true }`,
+      },
+    ],
+  },
 ];
 
-const boxH = (e: Entity) => 36 + e.fields.length * 19 + 8;
-
-const RELATIONS: { pts: [number, number][]; l1: string; l2: string; dashed?: boolean }[] = [
-  { pts: [[540, 130], [580, 130]], l1: "1", l2: "n" },
-  { pts: [[695, 351], [695, 400]], l1: "1", l2: "n" },
-  { pts: [[860, 230], [810, 450]], l1: "1", l2: "n" },
-  { pts: [[975, 315], [975, 400]], l1: "1", l2: "1" },
-  { pts: [[270, 150], [310, 340]], l1: "1", l2: "n" },
-  { pts: [[880, 315], [880, 362], [546, 362]], l1: "1", l2: "n" },
-  { pts: [[800, 630], [872, 315]], l1: "1", l2: "1", dashed: true },
+const ENTITIES: { name: string; cols: [string, string][] }[] = [
+  { name: "users", cols: [["id", "UUID · PK"], ["name", "TEXT"], ["phone", "TEXT"], ["role", "enum(admin, staff)"], ["password_hash", "TEXT"]] },
+  { name: "categories", cols: [["id", "UUID · PK"], ["name", "TEXT"], ["icon", "TEXT"], ["sort_order", "INT"]] },
+  { name: "products", cols: [["id", "UUID · PK"], ["category_id", "UUID · FK"], ["name", "TEXT"], ["description", "TEXT"], ["price_iqd", "INT"], ["size", "TEXT"], ["stock", "INT"], ["image_url", "TEXT"], ["badge", "TEXT?"], ["is_active", "BOOL"]] },
+  { name: "orders", cols: [["id", "UUID · PK"], ["order_no", "SERIAL"], ["customer_name", "TEXT"], ["customer_phone", "TEXT"], ["governorate", "TEXT"], ["address", "TEXT"], ["notes", "TEXT?"], ["total_iqd", "INT"], ["status", "ENUM"], ["created_at", "TIMESTAMPTZ"]] },
+  { name: "order_items", cols: [["id", "UUID · PK"], ["order_id", "UUID · FK"], ["product_id", "UUID · FK"], ["qty", "INT"], ["unit_price_iqd", "INT"]] },
+  { name: "visits", cols: [["id", "UUID · PK"], ["date", "DATE"], ["count", "INT"], ["UNIQUE", "(date)"]] },
+  { name: "ledger_entries", cols: [["id", "UUID · PK"], ["order_id", "UUID · FK?"], ["type", "enum(in, out)"], ["label", "TEXT"], ["amount_iqd", "INT"], ["date", "TIMESTAMPTZ"]] },
 ];
 
-function Erd() {
+const STATUS_FLOW = ["جديد", "قيد التجهيز", "قيد التوصيل", "تم التسليم"];
+
+const METHOD_CLS: Record<Endpoint["method"], string> = {
+  GET: "bg-olive-700",
+  POST: "bg-wa-dark",
+  PUT: "bg-saffron-600",
+  PATCH: "bg-saffron-600",
+  DELETE: "bg-pom-600",
+};
+
+function MethodBadge({ m }: { m: Endpoint["method"] }) {
   return (
-    <div dir="ltr" className="overflow-x-auto rounded-2xl border-2 border-ink/10 bg-olive-950">
-      <svg viewBox="0 0 1130 820" className="min-w-[860px] w-full h-auto">
-        <defs>
-          <pattern id="erdots" width="26" height="26" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1.2" fill="#55663c" opacity="0.5" />
-          </pattern>
-        </defs>
-        <rect width="1130" height="820" fill="url(#erdots)" />
+    <span dir="ltr" className={`${METHOD_CLS[m]} text-paper text-[11px] font-black px-2.5 py-1 rounded-md tracking-wide shrink-0`}>
+      {m}
+    </span>
+  );
+}
 
-        {RELATIONS.map((r, i) => {
-          const d = r.pts.map((p, j) => `${j === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ");
-          const [sx, sy] = r.pts[0];
-          const [ex, ey] = r.pts[r.pts.length - 1];
-          return (
-            <g key={i}>
-              <path d={d} fill="none" stroke={r.dashed ? "#d99c2b" : "#a9b584"} strokeWidth="2" strokeDasharray={r.dashed ? "7 6" : undefined} />
-              <circle cx={sx} cy={sy} r="4" fill={r.dashed ? "#d99c2b" : "#a9b584"} />
-              <circle cx={ex} cy={ey} r="4" fill={r.dashed ? "#d99c2b" : "#a9b584"} />
-              <text x={sx + 8} y={sy - 6} fill="#e5b356" fontSize="13" fontWeight="800" fontFamily="Tajawal">{r.l1}</text>
-              <text x={ex + 8} y={ey + 16} fill="#e5b356" fontSize="13" fontWeight="800" fontFamily="Tajawal">{r.l2}</text>
-            </g>
-          );
-        })}
-
-        {ENTITIES.map((e) => {
-          const h = boxH(e);
-          return (
-            <g key={e.name}>
-              <rect x={e.x} y={e.y} width="230" height={h} rx="12" fill="#202816" stroke={e.planned ? "#d99c2b" : "#6f8050"} strokeWidth={e.planned ? 2 : 1.5} strokeDasharray={e.planned ? "8 5" : undefined} />
-              <rect x={e.x} y={e.y} width="230" height="36" rx="12" fill={e.planned ? "#3a2f10" : "#2c371f"} />
-              <rect x={e.x} y={e.y + 24} width="230" height="12" fill={e.planned ? "#3a2f10" : "#2c371f"} />
-              <text x={e.x + 14} y={e.y + 24} fill={e.planned ? "#e5b356" : "#f3ddb0"} fontSize="15" fontWeight="800" fontFamily="ui-monospace, monospace">{e.name}</text>
-              {e.planned && (
-                <text x={e.x + 216} y={e.y + 23} fill="#d99c2b" fontSize="10" fontWeight="800" fontFamily="Tajawal" textAnchor="end">قريباً</text>
-              )}
-              {e.fields.map(([f, t], i) => (
-                <g key={f}>
-                  <text x={e.x + 14} y={e.y + 55 + i * 19} fill={t.includes("PK") || t.includes("FK") ? "#e5b356" : "#c8d1a9"} fontSize="12.5" fontWeight="700" fontFamily="ui-monospace, monospace">{f}</text>
-                  <text x={e.x + 216} y={e.y + 55 + i * 19} fill="#8a9a6b" fontSize="10.5" fontWeight="600" fontFamily="ui-monospace, monospace" textAnchor="end">{t}</text>
-                </g>
-              ))}
-            </g>
-          );
-        })}
-      </svg>
+function CodeBlock({ code, title }: { code: string; title: string }) {
+  const [ok, setOk] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setOk(true);
+    window.setTimeout(() => setOk(false), 1500);
+  };
+  return (
+    <div className="mt-3">
+      <div className="flex items-center justify-between bg-olive-950 text-paper/50 rounded-t-xl px-4 py-2 border border-olive-800 border-b-0">
+        <span dir="ltr" className="text-[11px] font-black tracking-wide">{title}</span>
+        <button onClick={copy} className="text-[11px] font-black text-saffron-400 hover:text-saffron-300 transition-colors">
+          {ok ? "✓ اننسخ" : "نسخ"}
+        </button>
+      </div>
+      <pre dir="ltr" className="text-left bg-olive-950 text-olive-100 rounded-b-xl border border-olive-800 p-4 text-[12px] leading-relaxed overflow-x-auto no-scrollbar">
+        <code>{code}</code>
+      </pre>
     </div>
   );
 }
 
-/* ==================== مواصفات الـ API ==================== */
-type Ep = {
-  m: "GET" | "POST" | "PATCH" | "DELETE";
-  path: string;
-  auth: "عام" | "مدير";
-  desc: string;
-  req?: string;
-  res: string;
-  planned?: boolean;
-};
-
-type Group = { id: string; title: string; icon?: string; eps: Ep[] };
-
-const j = (o: unknown) => JSON.stringify(o, null, 2);
-
-const GROUPS: Group[] = [
-  {
-    id: "api-auth", title: "المصادقة — Auth",
-    eps: [
-      {
-        m: "POST", path: "/api/v1/auth/login", auth: "عام",
-        desc: "دخول مدير الموقع. يرجع رمز JWT لمدة ١٥ دقيقة مع refresh token.",
-        req: j({ username: "admin", password: "••••••••" }),
-        res: j({ ok: true, data: { token: "eyJhbGciOi…", refresh_token: "rt_8f2…", expires_in: 900, admin: { id: "uuid", username: "admin", role: "owner" } } }),
-      },
-      {
-        m: "POST", path: "/api/v1/auth/refresh", auth: "عام",
-        desc: "تجديد رمز الوصول باستخدام refresh token.",
-        req: j({ refresh_token: "rt_8f2…" }),
-        res: j({ ok: true, data: { token: "eyJhbGciOi…", expires_in: 900 } }),
-      },
-      {
-        m: "POST", path: "/api/v1/auth/logout", auth: "مدير",
-        desc: "إبطال الـ refresh token الحالي.",
-        res: j({ ok: true, data: null }),
-      },
-    ],
-  },
-  {
-    id: "api-catalog", title: "الكتالوج — Categories & Products",
-    eps: [
-      {
-        m: "GET", path: "/api/v1/categories", auth: "عام",
-        desc: "كل التصنيفات مع عدد منتجاتها.",
-        res: j({ ok: true, data: [{ id: "uuid", name: "ألبان وأجبان", slug: "dairy", icon: "cheese", products_count: 2 }] }),
-      },
-      {
-        m: "POST", path: "/api/v1/categories", auth: "مدير",
-        desc: "إضافة تصنيف جديد.",
-        req: j({ name: "مخللات", icon: "jar" }),
-        res: j({ ok: true, data: { id: "uuid", name: "مخللات", slug: "pickles", icon: "jar" } }),
-      },
-      { m: "PATCH", path: "/api/v1/categories/:id", auth: "مدير", desc: "تعديل اسم أو أيقونة التصنيف.", res: j({ ok: true, data: { id: "uuid", name: "مخللات بلدية" } }) },
-      { m: "DELETE", path: "/api/v1/categories/:id", auth: "مدير", desc: "حذف تصنيف (يفشل إذا فيه منتجات — 409).", res: j({ ok: false, error: { code: "CATEGORY_NOT_EMPTY", message: "انقل منتجات التصنيف قبل حذفه" } }) },
-      {
-        m: "GET", path: "/api/v1/products?category=dairy&search=لبنة&page=1&limit=12", auth: "عام",
-        desc: "قائمة منتجات مع فلترة وبحث وترقيم صفحات.",
-        res: j({
-          ok: true,
-          data: [{ id: "uuid", slug: "labneh-baladi", name: "لبنة بلدية بحبة البركة", category: { id: "uuid", slug: "dairy" }, price: 7000, currency: "IQD", size: "مرطبان ١ كغم", stock: 40, image_url: "https://cdn.bait-souri.iq/p/labneh.webp", badge: "صناعة يدنا", is_featured: true }],
-          meta: { page: 1, limit: 12, total: 12, pages: 1 },
-        }),
-      },
-      { m: "GET", path: "/api/v1/products/:slug", auth: "عام", desc: "تفاصيل منتج واحد مع منتجات مقترحة من نفس التصنيف.", res: j({ ok: true, data: { "…": "كائن المنتج + related: []" } }) },
-      {
-        m: "POST", path: "/api/v1/products", auth: "مدير",
-        desc: "إضافة منتج. الصورة تُرفع multipart/form-data (حقل image) أو كرابط (image_url).",
-        req: `Content-Type: multipart/form-data
-name = "مكدوس سوري على أصوله"
-category_id = "uuid"
-price = 14000
-size = "مرطبان ١ كغم"
-stock = 30
-description = "…"
-image = <file: makdous.webp>`,
-        res: j({ ok: true, data: { id: "uuid", slug: "makdous-souri", image_url: "https://cdn.bait-souri.iq/p/makdous.webp" } }),
-      },
-      { m: "PATCH", path: "/api/v1/products/:id", auth: "مدير", desc: "تعديل أي حقل من حقول المنتج (جزئي).", req: j({ price: 13000, badge: "عرض الأسبوع" }), res: j({ ok: true, data: { "…": "المنتج بعد التعديل" } }) },
-      { m: "PATCH", path: "/api/v1/products/:id/stock", auth: "مدير", desc: "تعديل المخزون بزيادة أو نقصان نسبي (delta).", req: j({ delta: -2 }), res: j({ ok: true, data: { id: "uuid", stock: 28 } }) },
-      { m: "DELETE", path: "/api/v1/products/:id", auth: "مدير", desc: "حذف منتج (soft delete — is_archived).", res: j({ ok: true, data: null }) },
-    ],
-  },
-  {
-    id: "api-orders", title: "الطلبات — Orders (واتساب)",
-    eps: [
-      {
-        m: "POST", path: "/api/v1/orders", auth: "عام",
-        desc: "إنشاء طلب من سلة الزبون. يتحقق من المخزون والأسعار خادمياً، يخصم الكمية، ويرجع رابط واتساب برسالة الطلب كاملة جاهزة للنسخ.",
-        req: j({
-          items: [{ product_id: "uuid", qty: 2 }],
-          customer: { name: "أبو أحمد", phone: "07701234567", governorate: "ديالى", address: "بعقوبة — حي المعلمين", notes: "" },
-        }),
-        res: j({
-          ok: true,
-          data: {
-            id: "uuid", order_no: 104, status: "new",
-            items: [{ product_id: "uuid", product_name: "مكدوس سوري", unit_price: 14000, qty: 2, line_total: 28000 }],
-            subtotal: 28000, total: 28000, currency: "IQD",
-            whatsapp: { phone: "9647887356906", message: "🧺 *طلب جديد — البيت السوري*\n…", deep_link: "https://wa.me/9647887356906?text=…" },
-          },
-        }),
-      },
-      { m: "GET", path: "/api/v1/orders?status=new&from=2025-01-01&to=2025-01-31&page=1", auth: "مدير", desc: "قائمة الطلبات مع فلترة بالحالة والتاريخ.", res: j({ ok: true, data: ["…"], meta: { page: 1, total: 104 } }) },
-      { m: "GET", path: "/api/v1/orders/:id", auth: "مدير", desc: "تفاصيل طلب مع أصنافه وحالة توصيله وقيده المحاسبي.", res: j({ ok: true, data: { "…": "order + items + delivery + ledger_entry" } }) },
-      {
-        m: "PATCH", path: "/api/v1/orders/:id/status", auth: "مدير",
-        desc: "تغيير حالة الطلب: new → preparing → delivering → delivered | cancelled. عند delivered يُنشأ قيد «وارد» تلقائياً في المحاسبة.",
-        req: j({ status: "delivered" }),
-        res: j({ ok: true, data: { id: "uuid", status: "delivered", delivered_at: "2025-01-30T14:20:00Z", ledger_entry_id: "uuid" } }),
-      },
-    ],
-  },
-  {
-    id: "api-deliveries", title: "التوصيلات — Deliveries",
-    eps: [
-      { m: "GET", path: "/api/v1/deliveries?status=delivering", auth: "مدير", desc: "قائمة التوصيلات: السائق، المحافظة، رقم التتبع، والحالة.", res: j({ ok: true, data: [{ id: "uuid", order_no: 103, carrier: "توصيل ذاتي", driver_name: "أبو علي", governorate: "بغداد", status: "delivering", shipped_at: "…" }] }) },
-      {
-        m: "POST", path: "/api/v1/orders/:id/delivery", auth: "مدير",
-        desc: "إنشاء توصيلة لطلب — تحوّل حالة الطلب إلى delivering تلقائياً.",
-        req: j({ carrier: "سفرة ديالى", driver_name: "أبو علي", driver_phone: "07709876543", tracking_no: "DL-2231" }),
-        res: j({ ok: true, data: { id: "uuid", order_id: "uuid", status: "delivering" } }),
-      },
-      { m: "PATCH", path: "/api/v1/deliveries/:id", auth: "مدير", desc: "تحديث حالة التوصيلة. عند delivered يتحدّث الطلب والمحاسبة معاً.", req: j({ status: "delivered" }), res: j({ ok: true, data: { id: "uuid", status: "delivered", delivered_at: "…" } }) },
-    ],
-  },
-  {
-    id: "api-stats", title: "الزوار والإحصاء — Visits & Stats",
-    eps: [
-      {
-        m: "POST", path: "/api/v1/visits", auth: "عام",
-        desc: "Beacon يسجل الزيارة (مرة لكل visitor_key في اليوم). يُستدعى من المتصفح عبر sendBeacon مع rate limit.",
-        req: j({ visitor_key: "v_9f31ab" }),
-        res: "204 No Content",
-      },
-      {
-        m: "GET", path: "/api/v1/stats/overview", auth: "مدير",
-        desc: "أرقام لوحة التحكم الرئيسية.",
-        res: j({ ok: true, data: { visitors_total: 1284, visitors_today: 37, orders_total: 104, orders_new: 3, delivering: 1, revenue_iqd: 465000, expenses_iqd: 175000, net_iqd: 290000 } }),
-      },
-      { m: "GET", path: "/api/v1/stats/visits?days=7", auth: "مدير", desc: "سلسلة زيارات يومية لمخطط الأعمدة.", res: j({ ok: true, data: [{ date: "2025-01-24", count: 22 }, { date: "2025-01-25", count: 31 }] }) },
-    ],
-  },
-  {
-    id: "api-ledger", title: "المحاسبة المصغرة — Ledger",
-    eps: [
-      { m: "GET", path: "/api/v1/ledger?type=in&from=&to=", auth: "مدير", desc: "سجل القيود (وارد/مصروف) مع فلترة.", res: j({ ok: true, data: [{ id: "uuid", type: "in", label: "طلب #١٠٢ — تم التسليم", amount: 28000, date: "…" }] }) },
-      { m: "POST", path: "/api/v1/ledger", auth: "مدير", desc: "قيد يدوي جديد.", req: j({ type: "out", label: "شراء مرطبانات", amount: 35000 }), res: j({ ok: true, data: { id: "uuid" } }) },
-      { m: "DELETE", path: "/api/v1/ledger/:id", auth: "مدير", desc: "حذف قيد يدوي (القيود التلقائية المربوطة بطلبات لا تُحذف).", res: j({ ok: true, data: null }) },
-      { m: "GET", path: "/api/v1/ledger/summary", auth: "مدير", desc: "إجماليات الوارد والمصروف والصافي للفترة.", res: j({ ok: true, data: { income: 465000, expense: 175000, net: 290000, currency: "IQD" } }) },
-    ],
-  },
-  {
-    id: "api-uploads", title: "رفع الصور — Uploads",
-    eps: [
-      {
-        m: "POST", path: "/api/v1/uploads", auth: "مدير",
-        desc: "رفع صورة (webp/jpg/png حتى 2MB) — تُحسّن وتُرفع إلى CDN ويرجع رابطها.",
-        req: `Content-Type: multipart/form-data
-file = <image>`,
-        res: j({ ok: true, data: { url: "https://cdn.bait-souri.iq/p/abc.webp", width: 1024, height: 1024 } }),
-      },
-    ],
-  },
-  {
-    id: "api-payments", title: "الدفع الإلكتروني — Payments (قريباً)",
-    eps: [
-      {
-        m: "POST", path: "/api/v1/payments/init", auth: "عام", planned: true,
-        desc: "بدء عملية دفع لطلب (زين كاش / كي كارد / فاست بي). حالياً الموقع بلا دفع — الطلب يكتمل عبر واتساب والدفع عند الاستلام.",
-        req: j({ order_id: "uuid", provider: "zaincash" }),
-        res: j({ ok: true, data: { payment_id: "uuid", redirect_url: "https://pay.zaincash.iq/…" } }),
-      },
-      { m: "GET", path: "/api/v1/payments/:id", auth: "عام", planned: true, desc: "الاستعلام عن حالة دفعة.", res: j({ ok: true, data: { id: "uuid", status: "pending | paid | failed" } }) },
-      { m: "POST", path: "/api/v1/webhooks/payments", auth: "عام", planned: true, desc: "Webhook من مزوّد الدفع — يوقّع بـ HMAC ويُحدّث حالة الطلب والمحاسبة.", res: "200 OK" },
-    ],
-  },
-];
-
-const METHOD_CLS: Record<Ep["m"], string> = {
-  GET: "bg-[#d8efe2] text-[#157347]",
-  POST: "bg-saffron-200 text-saffron-600",
-  PATCH: "bg-olive-200 text-olive-800",
-  DELETE: "bg-pom-100 text-pom-700",
-};
-
-function Endpoint({ ep }: { ep: Ep }) {
-  const [openEx, setOpenEx] = useState(false);
+function EndpointRow({ ep }: { ep: Endpoint }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className={`rounded-2xl border-2 bg-paper p-4 lg:p-5 transition-colors ${ep.planned ? "border-dashed border-saffron-500/60" : "border-ink/10 hover:border-olive-600/40"}`}>
-      <div className="flex items-center gap-2.5 flex-wrap">
-        <span dir="ltr" className={`${METHOD_CLS[ep.m]} text-[12px] font-black px-3 py-1.5 rounded-lg tabular`}>{ep.m}</span>
-        <code dir="ltr" className="text-[13px] lg:text-[14px] font-bold text-ink bg-paper2 px-3 py-1.5 rounded-lg break-all">{ep.path}</code>
-        <span className={`text-[11px] font-black px-2.5 py-1 rounded-full border ${ep.auth === "مدير" ? "border-pom-300/60 text-pom-700 bg-pom-100/50" : "border-olive-500/40 text-olive-700 bg-olive-200/40"}`}>
-          {ep.auth === "مدير" ? "🔒 مدير" : "🌐 عام"}
-        </span>
-        {ep.planned && <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-saffron-200 text-saffron-600 border border-saffron-500/40">قريباً</span>}
-      </div>
-      <p className="mt-2.5 text-[14px] text-ink2 leading-relaxed font-medium">{ep.desc}</p>
-      <button onClick={() => setOpenEx(!openEx)} className="mt-2 text-[13px] font-black text-olive-700 hover:text-pom-600 transition-colors">
-        {openEx ? "▲ إخفاء المثال" : "▼ مثال الطلب والاستجابة"}
+    <div className="border-2 border-ink/10 rounded-2xl overflow-hidden bg-paper hover:border-olive-600/40 transition-colors">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 px-4 py-3.5 text-right">
+        <MethodBadge m={ep.method} />
+        <code dir="ltr" className="text-[13px] lg:text-[14px] font-black text-ink truncate">{ep.path}</code>
+        {ep.auth && (
+          <span className="shrink-0 text-[10px] font-black text-saffron-600 bg-saffron-200/70 px-2 py-0.5 rounded-full border border-saffron-500/40">
+            مدير فقط
+          </span>
+        )}
+        <span className={`mr-auto shrink-0 text-ink2 transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
       </button>
-      {openEx && (
-        <div className="fade-in mt-3 grid lg:grid-cols-2 gap-3" dir="ltr">
-          {ep.req && (
-            <div>
-              <p className="text-[11px] font-black text-ink2 mb-1.5">REQUEST {ep.m !== "GET" && "BODY"}</p>
-              <pre className="bg-olive-950 text-olive-200 text-[12px] leading-relaxed p-4 rounded-xl overflow-x-auto font-mono">{ep.req}</pre>
-            </div>
-          )}
-          <div className={ep.req ? "" : "lg:col-span-2"}>
-            <p className="text-[11px] font-black text-ink2 mb-1.5">RESPONSE</p>
-            <pre className="bg-olive-950 text-olive-200 text-[12px] leading-relaxed p-4 rounded-xl overflow-x-auto font-mono">{ep.res}</pre>
-          </div>
+      {open && (
+        <div className="px-4 pb-4 fade-in">
+          <p className="text-[14px] font-bold text-ink2 leading-relaxed">{ep.desc}</p>
+          {ep.req && <CodeBlock code={ep.req} title="Request" />}
+          <CodeBlock code={ep.res} title="Response · 200" />
         </div>
       )}
     </div>
   );
 }
 
-/* ==================== الصفحة ==================== */
-const TOC = [
-  { id: "overview", label: "نظرة عامة" },
-  { id: "conventions", label: "الاتفاقيات والأساس" },
-  { id: "erd", label: "مخطط ERD" },
-  { id: "entities", label: "جداول قاعدة البيانات" },
-  ...GROUPS.map((g) => ({ id: g.id, label: g.title })),
-  { id: "errors", label: "صيغة الأخطاء" },
-];
-
-export default function DocsPage() {
-  const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+/* ===== مخطط ERD ===== */
+function ErdDiagram() {
+  const boxes: { name: string; x: number; y: number; cols: [string, string][]; tone: string }[] = [
+    { name: "users", x: 540, y: 20, tone: "#59713A", cols: ENTITIES[0].cols },
+    { name: "categories", x: 20, y: 60, tone: "#59713A", cols: ENTITIES[1].cols },
+    { name: "products", x: 20, y: 300, tone: "#A93227", cols: ENTITIES[2].cols },
+    { name: "orders", x: 300, y: 440, tone: "#A93227", cols: ENTITIES[3].cols },
+    { name: "order_items", x: 20, y: 560, tone: "#D29B2E", cols: ENTITIES[4].cols },
+    { name: "visits", x: 560, y: 300, tone: "#59713A", cols: ENTITIES[5].cols },
+    { name: "ledger_entries", x: 560, y: 480, tone: "#D29B2E", cols: ENTITIES[6].cols },
+  ];
+  const boxH = (cols: [string, string][]) => 40 + cols.length * 21 + 8;
+  /* وصلات: من، إلى، نوع */
+  const rels: [number, number, "1" | "n"][] = [
+    [1, 2, "1"],
+    [2, 4, "1"],
+    [3, 4, "1"],
+    [3, 6, "1"],
+  ];
+  const edge = (b: { x: number; y: number; cols: [string, string][] }, side: "top" | "bottom" | "left" | "right") => {
+    const h = boxH(b.cols);
+    if (side === "left") return { x: b.x, y: b.y + h / 2 };
+    if (side === "right") return { x: b.x + 220, y: b.y + h / 2 };
+    if (side === "top") return { x: b.x + 110, y: b.y };
+    return { x: b.x + 110, y: b.y + h };
+  };
 
   return (
-    <main className="bg-paper pattern-leaves">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 lg:py-14">
-        {/* رأس الصفحة */}
-        <div className="relative overflow-hidden rounded-[26px] bg-olive-950 text-paper p-8 lg:p-12 grain">
-          <div className="absolute inset-0 pattern-stars opacity-50" />
-          <div className="relative z-10">
-            <p className="flex items-center gap-2 text-saffron-400 font-black text-sm">
-              <IDoc className="w-5 h-5" /> للمطوّرين · v1.0
-            </p>
-            <h1 className="font-display text-5xl lg:text-6xl mt-2 leading-tight">توثيق الـ <span className="text-saffron-400">API</span> ومخطط البيانات</h1>
-            <p className="mt-4 max-w-2xl text-paper/75 leading-relaxed font-medium">
-              الخلفية الكاملة لموقع البيت السوري: REST API مبني على <b className="text-paper">Node.js + Express + PostgreSQL</b>،
-              مصادقة JWT للمدير، طلبات الزبائن تتحول لرسائل واتساب جاهزة، مع نظام محاسبة مصغر وعدّاد زوار.
-              هذه الوثيقة هي العقد بين الواجهة الحالية (التي تعمل محلياً) والخادم المخطط له.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {["REST · JSON", "JWT Auth", "PostgreSQL 16", " multer / CDN", "WhatsApp Deep Links", "sendBeacon Analytics"].map((t) => (
-                <span key={t} dir="ltr" className="text-[12px] font-bold px-3.5 py-1.5 rounded-full border border-paper/25 text-paper/85">{t}</span>
-              ))}
+    <div dir="ltr" className="overflow-x-auto no-scrollbar rounded-2xl border-2 border-olive-800 bg-olive-950 pattern-stars">
+      <svg viewBox="0 0 800 770" className="min-w-[680px] w-full h-auto">
+        {rels.map(([a, b, type], i) => {
+          const from = boxes[a];
+          const to = boxes[b];
+          const p1 = edge(from, from.x > to.x ? "left" : "bottom");
+          const p2 = edge(to, to.x > from.x ? "right" : "top");
+          const mx = (p1.x + p2.x) / 2;
+          const my = (p1.y + p2.y) / 2;
+          return (
+            <g key={i}>
+              <path
+                d={`M ${p1.x} ${p1.y} C ${p1.x} ${my}, ${p2.x} ${my}, ${p2.x} ${p2.y}`}
+                fill="none"
+                stroke={type === "n" ? "#E3B44A" : "#AEBE8A"}
+                strokeWidth="2.5"
+                strokeDasharray={type === "n" ? "7 5" : undefined}
+              />
+              <circle cx={p1.x} cy={p1.y} r="4" fill="#AEBE8A" />
+              <circle cx={p2.x} cy={p2.y} r="4" fill="#AEBE8A" />
+              <text x={mx} y={my - 6} textAnchor="middle" fontSize="13" fontWeight="800" fill={type === "n" ? "#E3B44A" : "#AEBE8A"} fontFamily="Tajawal, sans-serif">
+                {type === "n" ? "N : 1" : "1 : 1"}
+              </text>
+            </g>
+          );
+        })}
+
+        {boxes.map((b) => (
+          <g key={b.name}>
+            <rect x={b.x} y={b.y} width="220" height={boxH(b.cols)} rx="12" fill="#232D18" stroke="#485C2F" strokeWidth="1.5" />
+            <rect x={b.x} y={b.y} width="220" height="32" rx="12" fill={b.tone} />
+            <rect x={b.x} y={b.y + 18} width="220" height="14" fill={b.tone} />
+            <text x={b.x + 110} y={b.y + 21} textAnchor="middle" fontSize="14" fontWeight="900" fill="#F7F0E2" fontFamily="ui-monospace, monospace">
+              {b.name}
+            </text>
+            {b.cols.map(([c, t], i) => (
+              <g key={c}>
+                <text x={b.x + 12} y={b.y + 52 + i * 21} fontSize="11.5" fontWeight="700" fill={t.includes("PK") ? "#E3B44A" : t.includes("FK") ? "#AEBE8A" : "#EFE5CF"} fontFamily="ui-monospace, monospace">
+                  {c}
+                </text>
+                <text x={b.x + 208} y={b.y + 52 + i * 21} textAnchor="end" fontSize="10" fill="#8d997a" fontFamily="ui-monospace, monospace">
+                  {t}
+                </text>
+              </g>
+            ))}
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/* ===== الصفحة ===== */
+export default function DocsPage() {
+  useReveal([]);
+  const [copied, setCopied] = useState(false);
+
+  const copyBase = async () => {
+    try {
+      await navigator.clipboard.writeText("https://albayt-alsyrian.iq/api/v1");
+    } catch { /* تجاهل */ }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <main className="relative pattern-leaves">
+      <div className="max-w-5xl mx-auto px-4 lg:px-8 py-12 lg:py-16">
+        {/* الترويسة */}
+        <div className="reveal">
+          <p className="flex items-center gap-2 text-pom-600 font-black text-sm">
+            <span className="inline-block w-8 h-0.5 bg-pom-600" /> توثيق تقني · للمطورين
+          </p>
+          <h1 className="font-display text-6xl lg:text-7xl text-ink mt-2 leading-none">
+            Backend API <span className="text-olive-700">&amp; ERD</span>
+          </h1>
+          <p className="mt-4 text-ink2 font-medium max-w-2xl leading-relaxed text-lg">
+            التوثيق الكامل لواجهات البيت السوري الخلفية: كل نقطة نهاية تحتاجها النسخة الحالية من الموقع
+            (المنتجات، السلة، الطلبات، واتساب، الإحصاءات، المحاسبة) مع مخطط قاعدة البيانات والعلاقات.
+          </p>
+        </div>
+
+        {/* الأساسيات */}
+        <div className="reveal mt-10 grid md:grid-cols-3 gap-4">
+          <div className="bg-olive-900 text-paper rounded-2xl p-5 pattern-stars relative overflow-hidden">
+            <p className="text-[12px] font-black text-saffron-400">Base URL</p>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <code dir="ltr" className="text-[13px] font-bold text-olive-100 truncate">albayt-alsyrian.iq/api/v1</code>
+              <button onClick={copyBase} className="shrink-0 text-[11px] font-black text-saffron-400 hover:text-saffron-300 transition-colors">
+                {copied ? "✓ اننسخ" : "نسخ"}
+              </button>
             </div>
           </div>
-        </div>
-
-        <div className="mt-10 grid lg:grid-cols-[240px_1fr] gap-8 items-start">
-          {/* فهرس */}
-          <aside className="lg:sticky lg:top-24 rounded-2xl border-2 border-ink/10 bg-paper p-4 max-lg:order-2">
-            <p className="font-display text-xl text-ink mb-3">الفهرس</p>
-            <nav className="flex lg:flex-col gap-1.5 overflow-x-auto no-scrollbar">
-              {TOC.map((t) => (
-                <button key={t.id} onClick={() => go(t.id)} className="shrink-0 text-right text-[13px] font-bold text-ink2 hover:text-pom-600 hover:bg-pom-100/50 px-3 py-2 rounded-lg transition-colors">
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-          </aside>
-
-          <div className="space-y-14 max-lg:order-1 min-w-0">
-            {/* نظرة عامة */}
-            <section id="overview" className="scroll-mt-24">
-              <h2 className="font-display text-4xl text-ink flex items-center gap-2"><ISpark className="w-5 h-5 text-pom-500" /> نظرة عامة على المعمارية</h2>
-              <p className="mt-3 text-ink2 leading-relaxed font-medium max-w-3xl">
-                الواجهة (هذا الموقع) React تعمل الآن بمنطق محلي كامل — والوثيقة تصف الخادم الذي ستنتقل إليه نفس العمليات.
-                تدفق الطلب الأساسي: الزبون يعبّي السلة ← الموقع يبني رسالة الطلب ← تنفتح واتساب بالرسالة جاهزة ←
-                الخادم يسجل الطلب ويخصم المخزون ← المدير يتابع من اللوحة ← عند التسليم يتقيد المبلغ كمردود تلقائياً.
-              </p>
-              <div dir="ltr" className="mt-6 grid sm:grid-cols-5 gap-2 items-center text-center">
-                {["المتصفح React", "REST /api/v1", "Node + Express", "PostgreSQL", "WhatsApp / CDN"].map((s, i) => (
-                  <React.Fragment key={s}>
-                    <div className="rounded-xl border-2 border-olive-600/40 bg-paper px-2 py-4 font-black text-[13px] text-olive-800">{s}</div>
-                    {i < 4 && <span className="hidden sm:block text-olive-500 font-black">→</span>}
-                  </React.Fragment>
-                ))}
-              </div>
-            </section>
-
-            {/* الاتفاقيات */}
-            <section id="conventions" className="scroll-mt-24">
-              <h2 className="font-display text-4xl text-ink">الاتفاقيات والأساس</h2>
-              <div className="mt-4 grid md:grid-cols-2 gap-4">
-                <div className="rounded-2xl border-2 border-ink/10 bg-paper p-5">
-                  <p className="font-black text-ink mb-2">🌍 الأساس والترميز</p>
-                  <pre dir="ltr" className="text-[12.5px] font-bold text-ink2 leading-relaxed font-mono">{`Base URL:  https://api.bait-souri.iq/api/v1
-Encoding:  UTF-8 (عربي كامل)
-Currency:  IQD — دينار عراقي (أرقام صحيحة)
-Dates:     ISO 8601 — Asia/Baghdad`}</pre>
-                </div>
-                <div className="rounded-2xl border-2 border-ink/10 bg-paper p-5">
-                  <p className="font-black text-ink mb-2">🔑 المصادقة</p>
-                  <p className="text-[14px] text-ink2 font-medium leading-relaxed">
-                    كل نقاط <b>«مدير»</b> تحتاج ترويسة:
-                  </p>
-                  <pre dir="ltr" className="mt-2 text-[12.5px] font-bold text-ink2 font-mono bg-paper2 p-3 rounded-lg">{`Authorization: Bearer <JWT>`}</pre>
-                  <p className="mt-2 text-[13px] text-ink2 font-medium">الرمز يعيش ١٥ دقيقة ويتجدد عبر refresh token. محاولات الدخول محدودة بـ ٥ في الساعة لكل IP.</p>
-                </div>
-                <div className="rounded-2xl border-2 border-ink/10 bg-paper p-5">
-                  <p className="font-black text-ink mb-2">📄 المغلف الموحّد</p>
-                  <pre dir="ltr" className="text-[12.5px] font-bold text-ink2 leading-relaxed font-mono">{`{
-  "ok": true,
-  "data": { … },
-  "meta": { "page": 1, "total": 12 }  // للقوائم فقط
-}`}</pre>
-                </div>
-                <div className="rounded-2xl border-2 border-ink/10 bg-paper p-5">
-                  <p className="font-black text-ink mb-2">⏱ الحدود والفرز</p>
-                  <p className="text-[14px] text-ink2 font-medium leading-relaxed">
-                    عام: <b dir="ltr">60 طلب/دقيقة</b> لكل IP · نقاط الإنشاء: <b dir="ltr">10/دقيقة</b>.
-                    <br />الفرز الافتراضي <span dir="ltr" className="font-mono font-bold">created_at DESC</span>، ويدعم <span dir="ltr" className="font-mono font-bold">?sort=price&order=asc</span>.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* ERD */}
-            <section id="erd" className="scroll-mt-24">
-              <h2 className="font-display text-4xl text-ink">مخطط علاقة الكيانات ERD</h2>
-              <p className="mt-3 text-ink2 font-medium leading-relaxed max-w-3xl">
-                عشر كيانات: الكتالوج (تصنيفات ← منتجات)، دورة الطلب (طلبات ← أصناف ← توصيلة)، المحاسبة (قيود مربوطة بالطلبات والمدراء)،
-                الزوار، الإعدادات، وجدول المدفوعات <b className="text-saffron-600">(المخطط — قريباً)</b>. مرّر أفقياً على الموبايل.
-              </p>
-              <div className="mt-5">
-                <Erd />
-              </div>
-              <div className="mt-3 flex flex-wrap gap-4 text-[12px] font-black text-ink2">
-                <span className="flex items-center gap-2"><span className="w-6 h-0.5 bg-[#a9b584] inline-block" /> علاقة فعلية</span>
-                <span className="flex items-center gap-2"><span className="w-6 h-0.5 inline-block border-t-2 border-dashed border-saffron-500" /> مخطط (قريباً)</span>
-                <span className="flex items-center gap-2"><span className="text-saffron-600 font-mono">PK/FK</span> مفاتيح</span>
-              </div>
-            </section>
-
-            {/* الجداول */}
-            <section id="entities" className="scroll-mt-24">
-              <h2 className="font-display text-4xl text-ink">جداول قاعدة البيانات</h2>
-              <div className="mt-5 grid md:grid-cols-2 gap-4">
-                {ENTITIES.map((e) => (
-                  <div key={e.name} className={`rounded-2xl border-2 bg-paper p-5 ${e.planned ? "border-dashed border-saffron-500/60" : "border-ink/10"}`}>
-                    <p dir="ltr" className="text-right font-mono font-black text-[15px] text-olive-800 flex items-center justify-between">
-                      {e.planned && <span className="text-[11px] font-sans font-black text-saffron-600 bg-saffron-200 px-2.5 py-1 rounded-full">قريباً</span>}
-                      {e.name}
-                    </p>
-                    <div className="mt-3 space-y-1.5">
-                      {e.fields.map(([f, t]) => (
-                        <div key={f} dir="ltr" className="flex justify-between text-[12.5px] font-mono border-b border-dashed border-ink/10 pb-1.5">
-                          <span className={t.includes("PK") || t.includes("FK") ? "font-black text-saffron-600" : "font-bold text-ink"}>{f}</span>
-                          <span className="text-ink2/80">{t}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* مجموعات الـ API */}
-            {GROUPS.map((g) => (
-              <section key={g.id} id={g.id} className="scroll-mt-24">
-                <h2 className="font-display text-4xl text-ink">{g.title}</h2>
-                <div className="mt-4 space-y-3.5">
-                  {g.eps.map((ep) => <Endpoint key={ep.path + ep.m} ep={ep} />)}
-                </div>
-              </section>
-            ))}
-
-            {/* الأخطاء */}
-            <section id="errors" className="scroll-mt-24">
-              <h2 className="font-display text-4xl text-ink">صيغة الأخطاء</h2>
-              <div className="mt-4 rounded-2xl border-2 border-ink/10 bg-paper p-5">
-                <pre dir="ltr" className="text-[12.5px] leading-relaxed font-mono text-ink2 overflow-x-auto">{j({
-                  ok: false,
-                  error: { code: "VALIDATION_FAILED", message: "بيانات الطلب ناقصة", details: [{ field: "customer.phone", issue: "رقم عراقي مطلوب (07XXXXXXXXX)" }] },
-                })}</pre>
-                <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-[13px] font-bold">
-                  {[
-                    ["400", "VALIDATION_FAILED — بيانات ناقصة"],
-                    ["401", "UNAUTHENTICATED — رمز ناقص/منتهي"],
-                    ["403", "FORBIDDEN — صلاحية مدير مطلوبة"],
-                    ["404", "NOT_FOUND — المنتج/الطلب مو موجود"],
-                    ["409", "CONFLICT — كمية غير كافية / حذف تصنيف مشغول"],
-                    ["429", "RATE_LIMITED — خفف شوي 🙏"],
-                  ].map(([c, t]) => (
-                    <div key={c} className="flex items-center gap-2.5 bg-paper2 rounded-xl px-3.5 py-2.5">
-                      <span dir="ltr" className={`font-black px-2.5 py-1 rounded-lg ${+c < 404 ? "bg-saffron-200 text-saffron-600" : +c === 429 ? "bg-olive-200 text-olive-800" : "bg-pom-100 text-pom-700"}`}>{c}</span>
-                      <span className="text-ink2">{t}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <p className="mt-8 text-center font-display text-2xl text-ink2">— نهاية الوثيقة · البيت السوري 🌿 —</p>
-            </section>
+          <div className="bg-paper border-2 border-ink/10 rounded-2xl p-5">
+            <p className="text-[12px] font-black text-olive-600">المصادقة</p>
+            <p className="mt-2 text-[13px] font-bold text-ink2 leading-relaxed">
+              نقاط المدير محمية بـ <code dir="ltr" className="text-ink">Bearer JWT</code> يُستخرج من <code dir="ltr" className="text-ink">/auth/login</code>. نقاط المتجر مفتوحة للجميع.
+            </p>
+          </div>
+          <div className="bg-paper border-2 border-ink/10 rounded-2xl p-5">
+            <p className="text-[12px] font-black text-olive-600">الترميز والأخطاء</p>
+            <p className="mt-2 text-[13px] font-bold text-ink2 leading-relaxed">
+              كل الأجسام <code dir="ltr" className="text-ink">JSON · UTF-8</code>. الأخطاء بصيغة موحّدة: <code dir="ltr" className="text-ink">{"{ error: { code, message } }"}</code>
+            </p>
           </div>
         </div>
+
+        {/* دورة الطلب */}
+        <div className="reveal mt-10 bg-paper border-2 border-ink/10 rounded-2xl p-5 lg:p-6">
+          <h2 className="font-display text-3xl text-ink">دورة حياة الطلب</h2>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {STATUS_FLOW.map((s, i) => (
+              <React.Fragment key={s}>
+                <span className="px-4 py-2 rounded-full bg-olive-800 text-paper text-[13px] font-black">{s}</span>
+                {i < STATUS_FLOW.length - 1 && <span className="text-olive-500 font-black text-lg">←</span>}
+              </React.Fragment>
+            ))}
+            <span className="text-ink2 font-black text-lg mx-1">/</span>
+            <span className="px-4 py-2 rounded-full bg-ink/10 text-ink2 text-[13px] font-black">ملغي</span>
+          </div>
+          <p className="mt-3 text-[13px] font-bold text-ink2">
+            💡 عند الانتقال إلى «تم التسليم» يُنشأ قيد وارد تلقائياً في <code dir="ltr" className="text-ink">ledger_entries</code> مرتبطة بـ <code dir="ltr" className="text-ink">order_id</code> — وهذا ما تراه لوحة المحاسبة.
+          </p>
+        </div>
+
+        {/* مخطط ERD */}
+        <div className="reveal mt-14">
+          <h2 className="font-display text-4xl lg:text-5xl text-ink leading-none">مخطط قاعدة البيانات <span className="text-pom-600">ERD</span></h2>
+          <p className="mt-3 text-ink2 font-medium max-w-2xl">سبع جداول بعلاقات واضحة: المنتجات تنتمي لتصنيف، الطلب يتكون من أصناف، والتسليم يولّد قيداً محاسبياً.</p>
+          <div className="mt-6">
+            <ErdDiagram />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[12px] font-black text-ink2">
+            <span className="flex items-center gap-2"><span className="w-4 h-4 rounded bg-pom-600 inline-block" /> جوهر المتجر</span>
+            <span className="flex items-center gap-2"><span className="w-4 h-4 rounded bg-olive-600 inline-block" /> كتالوج ومستخدمون</span>
+            <span className="flex items-center gap-2"><span className="w-4 h-4 rounded bg-saffron-500 inline-block" /> عمليات ومالية</span>
+            <span className="flex items-center gap-2"><span className="inline-block w-6 border-t-[3px] border-dashed border-saffron-500" /> N : 1</span>
+            <span className="flex items-center gap-2"><span className="inline-block w-6 border-t-[3px] border-olive-300" /> 1 : 1</span>
+          </div>
+        </div>
+
+        {/* الجداول */}
+        <div className="reveal mt-12">
+          <h2 className="font-display text-4xl text-ink leading-none">الجداول <span className="text-olive-700">Entities</span></h2>
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ENTITIES.map((e) => (
+              <div key={e.name} className="bg-paper border-2 border-ink/10 rounded-2xl overflow-hidden hover:border-olive-600/40 hover:-translate-y-1 transition-all">
+                <p dir="ltr" className="text-left bg-olive-800 text-paper font-black text-[13px] px-4 py-2.5 tracking-wide font-mono">{e.name}</p>
+                <ul className="p-3.5 space-y-1.5">
+                  {e.cols.map(([c, t]) => (
+                    <li key={c} dir="ltr" className="text-left flex items-baseline justify-between gap-2 text-[12px]">
+                      <code className={`font-bold ${t.includes("PK") ? "text-pom-600" : t.includes("FK") ? "text-olive-700" : "text-ink"}`}>{c}</code>
+                      <span className="text-ink2 font-medium text-[11px]">{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* نقاط النهاية */}
+        <div className="mt-14 space-y-12">
+          {GROUPS.map((g, gi) => (
+            <div key={g.title} className="reveal" style={{ transitionDelay: `${gi * 60}ms` }}>
+              <div className="flex items-center gap-3">
+                <span className="grid place-items-center w-9 h-9 rounded-full bg-pom-600 text-paper font-display text-lg leading-none pt-1">{gi + 1}</span>
+                <h2 className="font-display text-4xl text-ink leading-none">{g.title}</h2>
+              </div>
+              <p className="mt-2 text-[14px] font-bold text-ink2 mr-12">{g.note}</p>
+              <div className="mt-5 space-y-3">
+                {g.endpoints.map((ep) => (
+                  <EndpointRow key={ep.method + ep.path} ep={ep} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ملاحظات النشر */}
+        <div className="reveal mt-14 bg-olive-900 text-paper rounded-[24px] p-6 lg:p-8 pattern-stars relative overflow-hidden grain">
+          <h2 className="font-display text-3xl text-saffron-400">ملاحظات النشر</h2>
+          <ul className="mt-4 space-y-2.5 text-[14px] font-medium text-paper/85 leading-relaxed">
+            <li>• النسخة الحالية من الموقع تعمل بالكامل من المتصفح (LocalStorage) كنموذج أولي — هذا التوثيق هو خطة الـ Backend الجاهزة للتنفيذ.</li>
+            <li>• الدفع الإلكتروني عبر الموقع <b className="text-saffron-400">قريباً</b>: يُضاف جدول <code dir="ltr" className="text-paper">payments</code> مربوط بـ <code dir="ltr" className="text-paper">orders</code> مع بوابة دفع عراقية.</li>
+            <li>• عدّاد الزوار يُحدّث عبر <code dir="ltr" className="text-paper">visits</code> بواقع صف واحد لكل يوم (UPSERT على التاريخ).</li>
+            <li>• الصور تُرفع عبر <code dir="ltr" className="text-paper">/uploads</code> وتُحفظ بصيغة WebP مع نسخ مصغّرة للبطاقات.</li>
+          </ul>
+        </div>
+
+        <p className="text-center mt-10 text-[13px] font-bold text-ink2">
+          البيت السوري — لسنا الوحيدين… لكننا الأفضل 🌿
+        </p>
       </div>
     </main>
   );

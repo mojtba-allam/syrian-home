@@ -3,30 +3,32 @@ import { ShopProvider } from "./store";
 import { useRoute } from "./hooks";
 import { Header, Footer, Toasts, FloatingWA } from "./ui";
 import HomePage from "./home";
+import CartDrawer from "./cart";
 import AdminPage from "./admin";
 import DocsPage from "./docs";
-import CartDrawer from "./cart";
 
 function Shell() {
   const [route, nav] = useRoute();
 
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    window.scrollTo(0, 0);
   }, [route]);
 
-  const isAdmin = route === "admin";
-
   return (
-    <div className="min-h-screen flex flex-col bg-paper text-ink">
-      {!isAdmin && <Header route={route} nav={nav} />}
+    <div className="min-h-screen flex flex-col relative grain">
+      <Header route={route} nav={nav} />
       <div className="grow">
         {route === "home" && <HomePage />}
-        {route === "admin" && <AdminPage />}
         {route === "docs" && <DocsPage />}
+        {route === "admin" && <AdminPage />}
       </div>
-      {!isAdmin && <Footer nav={nav} />}
-      {!isAdmin && <FloatingWA />}
-      <CartDrawer />
+      <Footer nav={nav} />
+      {route === "home" && (
+        <>
+          <CartDrawer />
+          <FloatingWA />
+        </>
+      )}
       <Toasts />
     </div>
   );

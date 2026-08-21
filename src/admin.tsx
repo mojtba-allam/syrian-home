@@ -5,14 +5,6 @@ import {
   arNum, CATEGORIES, fmtDate, fmtDateTime, JAM_IMAGE, money, OrderStatus, ORDER_STATUSES,
   Product,
 } from "./data";
-
-/** رابط واتساب مباشر للزبون من رقمه العراقي */
-function customerWaLink(phone: string, name: string, no: number, status: OrderStatus): string {
-  const digits = phone.replace(/\D/g, "");
-  const intl = digits.startsWith("964") ? digits : digits.startsWith("0") ? "964" + digits.slice(1) : "964" + digits;
-  const msg = `مرحباً ${name} 🌿 هذا البيت السوري — بخصوص طلبك رقم #${no} (الحالة الحالية: ${status}).`;
-  return `https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;
-}
 import {
   IBag, IBox, IChart, ICheese, ICheck, ICoin, IDoc, IDrop, IEdit, IEye, IJar, ILeaf,
   ILock, IOlive, ICherry, IPlus, ITrash, ITruck, IWhats, IX, Logo,
@@ -23,6 +15,14 @@ const CAT_ICON: Record<string, (p: { className?: string }) => React.ReactElement
 };
 
 const ADMIN_PIN = "1234";
+
+/** رابط واتساب مباشر للزبون من رقمه العراقي */
+function customerWaLink(phone: string, name: string, no: number, status: OrderStatus): string {
+  const digits = phone.replace(/\D/g, "");
+  const intl = digits.startsWith("964") ? digits : digits.startsWith("0") ? "964" + digits.slice(1) : "964" + digits;
+  const msg = `مرحباً ${name} 🌿 هذا البيت السوري — بخصوص طلبك رقم #${no} (الحالة الحالية: ${status}).`;
+  return `https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;
+}
 
 /* ==================== تسجيل الدخول ==================== */
 function AdminLogin({ onOk }: { onOk: () => void }) {
@@ -280,7 +280,7 @@ function AdminProducts() {
             <div className="sm:col-span-2 lg:col-span-3 grid sm:grid-cols-[1fr_auto] gap-3 items-end">
               <label className="block">
                 <span className="text-[12px] font-black text-ink2 block mb-1">رابط صورة المنتج</span>
-                <input dir="ltr" className={`${inputCls} text-left`} value={form.image.startsWith("data:") ? "" : form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://…" />
+                <input dir="ltr" className={`${inputCls} text-left`} value={form.image.startsWith("") ? "" : form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://…" />
               </label>
               <div>
                 <span className="text-[12px] font-black text-ink2 block mb-1">أو ارفع صورة</span>

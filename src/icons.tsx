@@ -61,95 +61,111 @@ export const ICherry = ({ className, strokeWidth = 1.8 }: P) => (
   </svg>
 );
 
-export const IWheat = ({ className, strokeWidth = 1.8 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M12 21V8" />
-    <path d="M12 8c-2.5 0-4-1.5-4-4 2.5 0 4 1.5 4 4zM12 8c2.5 0 4-1.5 4-4-2.5 0-4 1.5-4 4zM12 13c-2.5 0-4-1.5-4-4 2.5 0 4 1.5 4 4zM12 13c2.5 0 4-1.5 4-4-2.5 0-4 1.5-4 4zM12 18c-2.5 0-4-1.5-4-4 2.5 0 4 1.5 4 4zM12 18c2.5 0 4-1.5 4-4-2.5 0-4 1.5-4 4z" />
-  </svg>
-);
-
 export const ITruck = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M1.5 6h12v11h-12zM13.5 9.5h4.6l3 3.5v4h-7.6" />
-    <circle cx="6" cy="17.5" r="1.9" />
-    <circle cx="17" cy="17.5" r="1.9" />
-    <path d="M4 9.5h5" />
+    <path d="M2.5 5.5h11.5v11H2.5zM14 9h4l3 3.5V16.5h-7" />
+    <circle cx="6.5" cy="17.5" r="1.8" />
+    <circle cx="17" cy="17.5" r="1.8" />
+    <path d="M8.3 16.5h7" />
   </svg>
 );
 
 export const IShield = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M12 3l7.5 2.6v5.2c0 5-3.2 8.6-7.5 10.2-4.3-1.6-7.5-5.2-7.5-10.2V5.6z" />
-    <path d="M8.8 12l2.2 2.2 4.2-4.4" />
+    <path d="M12 3l7 2.5v5.2c0 4.6-3 8.2-7 9.8-4-1.6-7-5.2-7-9.8V5.5z" />
+    <path d="M9 11.8l2.2 2.2L15.4 9.6" />
+  </svg>
+);
+
+export const IMortar = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <path d="M4 10h16c0 4-2.5 7-6.5 7.5V19a1.5 1.5 0 01-1.5 1.5h-.5A1.5 1.5 0 0110 19v-1.5C6 17 3.5 14 4 10z" />
+    <path d="M13.5 10L19 3.5M5.5 10c1-.5 2 .5 3 0" />
   </svg>
 );
 
 export const IHand = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M7 11V5.5a1.5 1.5 0 013 0V10m0-4.5v-1a1.5 1.5 0 013 0V10m0-3.5a1.5 1.5 0 013 0V12" />
-    <path d="M16 12V8.5a1.5 1.5 0 013 0V14c0 4-2.5 7-6.5 7S6 18.5 5.5 15L4 11.5a1.6 1.6 0 012.8-1.5L7 11" />
+    <path d="M8 12V5.8a1.4 1.4 0 012.8 0V11m0-6.2a1.4 1.4 0 012.8 0V11m0-5.2a1.4 1.4 0 012.8 0v7.7c0 3.9-2.6 6.5-6.3 6.5-3 0-4.6-1.5-6-4.2L2.6 13a1.5 1.5 0 012.5-1.6L6.6 13V7.2A1.4 1.4 0 018 5.8" />
   </svg>
 );
 
-export const IPhone = ({ className, strokeWidth = 1.8 }: P) => (
+export const IWheat = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M5 4h4l1.5 4.5L8 10.5a12 12 0 005.5 5.5l2-2.5L20 15v4a2 2 0 01-2.2 2A16.8 16.8 0 013 6.2 2 2 0 015 4z" />
+    <path d="M12 21V8" />
+    <path d="M12 8c-2.8 0-4.5-1.8-4.5-4.5C10.3 3.5 12 5.3 12 8zM12 8c2.8 0 4.5-1.8 4.5-4.5C13.7 3.5 12 5.3 12 8z" />
+    <path d="M12 13c-2.8 0-4.5-1.8-4.5-4.5 2.8 0 4.5 1.8 4.5 4.5zM12 13c2.8 0 4.5-1.8 4.5-4.5-2.8 0-4.5 1.8-4.5 4.5z" />
   </svg>
 );
 
-export const IWhats = ({ className }: P) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={base(className)}>
-    <path d="M12 2.2A9.7 9.7 0 002.3 12c0 1.7.4 3.3 1.2 4.8L2.2 21.8l5.1-1.3a9.7 9.7 0 004.7 1.2 9.7 9.7 0 009.7-9.7A9.7 9.7 0 0012 2.2zm0 17.7c-1.5 0-2.9-.4-4.2-1.1l-.3-.2-3 .8.8-3-.2-.3A8 8 0 1112 19.9zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1-.2.2-.7.8-.8 1-.1.2-.3.2-.5.1a6.6 6.6 0 01-3.3-2.9c-.2-.4.2-.4.5-1 .1-.2 0-.4 0-.5l-.7-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.9.9-1.1 2.2-.2 3.9a13 13 0 005 4.6c1.9.8 2.7.9 3.6.7.6-.1 1.4-.6 1.6-1.2.2-.6.2-1.1.1-1.2l-.5-.2z" />
+export const ICoin = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5v9M9.5 9.8c0-1 1.1-1.8 2.5-1.8s2.5.7 2.5 1.7c0 2.6-5 1.9-5 4.6 0 1 1.1 1.7 2.5 1.7s2.5-.8 2.5-1.8" />
+  </svg>
+);
+
+export const IChart = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <path d="M4 4v16h16" />
+    <path d="M8 16v-5M12 16V7M16 16v-8" />
+  </svg>
+);
+
+export const IBox = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <path d="M3.5 8L12 3.5 20.5 8v8L12 20.5 3.5 16z" />
+    <path d="M3.5 8L12 12.5 20.5 8M12 12.5v8" />
+  </svg>
+);
+
+export const IDoc = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <path d="M6 3.5h8l4 4V20.5H6z" />
+    <path d="M14 3.5v4h4M9 12h6M9 15.5h6M9 8.5h2" />
   </svg>
 );
 
 export const IBag = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M5.5 8h13l-1 12.5h-11z" />
-    <path d="M8.5 8V6.5a3.5 3.5 0 017 0V8" />
+    <path d="M5 8h14l-1 12.5H6z" />
+    <path d="M8.5 10.5V7a3.5 3.5 0 017 0v3.5" />
   </svg>
 );
 
-export const IMenu = ({ className, strokeWidth = 2 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" className={base(className)}>
-    <path d="M4 7h16M4 12h16M4 17h10" />
-  </svg>
-);
-
-export const IX = ({ className, strokeWidth = 2 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" className={base(className)}>
-    <path d="M6 6l12 12M18 6L6 18" />
-  </svg>
-);
-
-export const IPlus = ({ className, strokeWidth = 2.2 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" className={base(className)}>
-    <path d="M12 5v14M5 12h14" />
-  </svg>
-);
-
-export const IMinus = ({ className, strokeWidth = 2.2 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" className={base(className)}>
-    <path d="M5 12h14" />
-  </svg>
-);
-
-export const ITrash = ({ className, strokeWidth = 1.8 }: P) => (
+export const IUser = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M4.5 6.5h15M9 6.5V4.8A1.3 1.3 0 0110.3 3.5h3.4A1.3 1.3 0 0115 4.8v1.7M6.5 6.5l.8 13A1.5 1.5 0 008.8 21h6.4a1.5 1.5 0 001.5-1.5l.8-13M10 10.5v6M14 10.5v6" />
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M4.5 20.5c1-4 4-6 7.5-6s6.5 2 7.5 6" />
+  </svg>
+);
+
+export const ILock = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+    <path d="M8 10.5V8a4 4 0 018 0v2.5" />
+    <circle cx="12" cy="15.5" r="1.2" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const IEye = ({ className, strokeWidth = 1.8 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 export const IEdit = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M4 20h4.5L19.5 9a2.1 2.1 0 00-3-3L5.5 17z" />
-    <path d="M13.5 6.5l3 3M4 20l1.5-4.5" />
+    <path d="M4 20h4l11-11a2.1 2.1 0 00-3-3L5 17z" />
+    <path d="M13.5 6.5l3 3" />
   </svg>
 );
 
-export const ICheck = ({ className, strokeWidth = 2.4 }: P) => (
+export const ITrash = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M4.5 12.5l5 5L19.5 7" />
+    <path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l1 13.5h9l1-13.5" />
+    <path d="M10 10.5v6M14 10.5v6" />
   </svg>
 );
 
@@ -160,59 +176,45 @@ export const ICopy = ({ className, strokeWidth = 1.8 }: P) => (
   </svg>
 );
 
-export const ILock = ({ className, strokeWidth = 1.8 }: P) => (
+export const IX = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <rect x="5" y="10.5" width="14" height="9.5" rx="2" />
-    <path d="M8 10.5V8a4 4 0 018 0v2.5M12 14.5v2" />
+    <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
 
-export const IChart = ({ className, strokeWidth = 1.8 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M4 4v16h16" />
-    <path d="M8 16v-5M12 16V7M16 16v-8M20 16V10" />
+export const IPlus = ({ className, strokeWidth = 2 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" className={base(className)}>
+    <path d="M12 5v14M5 12h14" />
   </svg>
 );
 
-export const ICoin = ({ className, strokeWidth = 1.8 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <ellipse cx="12" cy="7" rx="7.5" ry="3.5" />
-    <path d="M4.5 7v10c0 1.9 3.4 3.5 7.5 3.5s7.5-1.6 7.5-3.5V7" />
-    <path d="M4.5 12c0 1.9 3.4 3.5 7.5 3.5s7.5-1.6 7.5-3.5" />
+export const IMinus = ({ className, strokeWidth = 2 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" className={base(className)}>
+    <path d="M5 12h14" />
   </svg>
 );
 
-export const IBox = ({ className, strokeWidth = 1.8 }: P) => (
+export const ICheck = ({ className, strokeWidth = 2.2 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M12 3l8 4v10l-8 4-8-4V7z" />
-    <path d="M4 7l8 4 8-4M12 11v10" />
+    <path d="M4.5 12.5l5 5L19.5 7" />
   </svg>
 );
 
-export const IDoc = ({ className, strokeWidth = 1.8 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M6 3h8l4 4v14H6z" />
-    <path d="M14 3v4h4M9 12h6M9 15.5h6M9 8.5h2" />
-  </svg>
-);
-
-export const IUser = ({ className, strokeWidth = 1.8 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <circle cx="12" cy="8" r="3.6" />
-    <path d="M5 20.5c.8-3.7 3.6-5.7 7-5.7s6.2 2 7 5.7" />
-  </svg>
-);
-
-export const IEye = ({ className, strokeWidth = 1.8 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z" />
-    <circle cx="12" cy="12" r="2.8" />
+export const IMenu = ({ className, strokeWidth = 2 }: P) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" className={base(className)}>
+    <path d="M4 6.5h16M4 12h16M4 17.5h10" />
   </svg>
 );
 
 export const IArrowDown = ({ className, strokeWidth = 2 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M12 4v16m0 0l-6-6m6 6l6-6" />
+    <path d="M12 4v15M6 13.5l6 6 6-6" />
+  </svg>
+);
+
+export const IWhats = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={base(className)}>
+    <path d="M12.04 2a9.9 9.9 0 00-8.5 14.96L2 22l5.18-1.5A9.9 9.9 0 1012.04 2zm0 18.1a8.2 8.2 0 01-4.2-1.16l-.3-.18-3.07.9.92-3-.2-.31a8.2 8.2 0 116.85 3.75zm4.5-6.13c-.25-.12-1.46-.72-1.68-.8-.23-.09-.4-.13-.56.12-.17.25-.64.8-.78.97-.15.16-.29.18-.53.06a6.7 6.7 0 01-1.97-1.22 7.4 7.4 0 01-1.36-1.7c-.14-.25-.02-.38.1-.5.12-.12.25-.3.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.43-.06-.13-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.44.06-.66.3-.23.25-.87.85-.87 2.07s.9 2.4 1.02 2.57c.12.17 1.75 2.67 4.23 3.74.6.26 1.05.41 1.41.53.6.19 1.13.16 1.56.1.47-.07 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.18-.06-.1-.22-.16-.47-.29z" />
   </svg>
 );
 
@@ -222,18 +224,11 @@ export const ISpark = ({ className }: P) => (
   </svg>
 );
 
-export const IMortar = ({ className, strokeWidth = 1.8 }: P) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
-    <path d="M4 10h16c0 4-2 6.5-5 7.3V19a1.5 1.5 0 01-1.5 1.5h-3A1.5 1.5 0 019 19v-1.7C6 16.5 4 14 4 10z" />
-    <path d="M13 10L19.5 3.5" />
-  </svg>
-);
-
 export const IZoom = ({ className, strokeWidth = 1.8 }: P) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={base(className)}>
     <circle cx="10.5" cy="10.5" r="6.5" />
-    <path d="M20.5 20.5L15.2 15.2" />
-    <path d="M10.5 8v5M8 10.5h5" />
+    <path d="M15.3 15.3L21 21" />
+    <path d="M10.5 7.8v5.4M7.8 10.5h5.4" />
   </svg>
 );
 

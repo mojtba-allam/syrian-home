@@ -6,11 +6,11 @@ import {
   arNum, money, waLink, WHATSAPP_DISPLAY,
 } from "./data";
 import { Marquee, MARQUEE_ITEMS } from "./ui";
+import ProductModal from "./product";
 import {
   IArrowDown, ICheese, ICherry, ICheck, IDrop, IHand, IJar, ILeaf,
   IMortar, IOlive, IPlus, IPom, IShield, ITruck, IWheat, IWhats, ISpark, IZoom, Logo,
 } from "./icons";
-import ProductModal from "./product";
 
 const CAT_ICON: Record<string, (p: { className?: string }) => React.ReactElement> = {
   cheese: ICheese, jar: IJar, leaf: ILeaf, drop: IDrop, cherry: ICherry, olive: IOlive,
@@ -267,7 +267,7 @@ function ShopSection({ onOpenProduct }: { onOpenProduct: (id: string) => void })
           </h2>
         </div>
         <p className="reveal text-ink2 font-medium text-sm max-w-xs leading-relaxed">
-          كل شي معمول بالبيت، على الطريقة السورية الأصلية. اختار تصنيف أو تصفّح الكل.
+          كل شي معمول بالبيت، على الطريقة السورية الأصلية. اضغط على أي منتج لتشوف التفاصيل والصور.
         </p>
       </div>
 
@@ -513,10 +513,10 @@ function DeliverySection() {
 
 /* ============================ الصفحة الرئيسية ============================ */
 export default function HomePage() {
-  useReveal([JAM_IMAGE]);
   const { products } = useShop();
   const [selId, setSelId] = useState<string | null>(null);
   const sel = selId ? products.find((p) => p.id === selId) ?? null : null;
+  useReveal([JAM_IMAGE]);
 
   return (
     <main>
